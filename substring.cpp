@@ -7,28 +7,31 @@ private:
 	string _substr;
 	size_t _alph = 31;
 	int _prime = INT_MAX;
+	// int _prime = 174281;
 
-	vector<size_t>& prefixFunc()
+	vector<size_t>& prefixFunc(string text)
 	{
-		static vector<size_t> pi(_substr.length());
+		// cout << "prefixFunc " << text << endl;
+		static vector<size_t> pi(text.length(), 0);
 		
 		pi[0] = 0;
 		size_t k = 0;
 
-		for (size_t i = 0; i < _substr.length() - 1; ++i)
+		for (size_t i = 1; i < text.length() - 1; ++i)
 		{
 
-			while (k > 0 and _text[k] != _text[i])
+			while (k > 0 and text[k] != text[i])
 			{
-
+				// cout << 2 << endl;
 				k = pi[k - 1];
 			}
-			if (_text[k] == _text[i])
+			if (text[k] == text[i])
 			{
 				// cout << 1<< endl;
 				++k;
 			}
-			pi.push_back(k);
+			// pi.push_back(k);
+			pi[i] = k;
 		}
 
 		return pi;
@@ -36,7 +39,7 @@ private:
 
 
 public:
-	SubstringFinder(string &t, string &s, size_t alph = 31) : _text(t), _substr(s), _alph(alph) {}
+	SubstringFinder(string &t, string &s, size_t alph = 26) : _text(t), _substr(s), _alph(alph) {}
 
 	vector<size_t>& Rabin_Carp()
 	{
@@ -81,15 +84,91 @@ public:
 
 	vector<int>& getSuffixTable()
 	{
-		static vector<int> suffixTable();
+		size_t m = _substr.length();
+		static vector<int> suffixTable(m + 1, m);
+		// cout << "SIZE: " << suffixTable.size() << endl;
+		auto pi = prefixFunc(_substr);
 
+		
+		// for (int i = 0; i < m; ++i)
+		// {
+		// 	cout << pi[i];
+		// }
+		// size_t up_est = m - pi[m - 1];
+		reverse(_substr.begin(), _substr.end());
+		// cout << _substr << endl;
+		auto pi_reverse = prefixFunc(_substr);
+		reverse(_substr.begin(), _substr.end());
+		// cout << _substr << endl;
+		// vector<int> Index(m, m);
+		// cout << "\n*****\n";
+		for (int i = 0;  i < m +1 ; ++i)
+		{
+			suffixTable[i] = m - pi[m - 1];
+			
+			// cout << Index[i];
+		}
+		// cout << "\n*****\n";
+	
+		vector<int> Shift(m, 0);
+		// cout << endl;
+		// int ind = 0;
+		for (int i = 0;  i < m ; ++i)
+		{
+			int ind = m - pi_reverse[i];
+			int shift = i - pi_reverse[i] + 1;
+			if (suffixTable[ind] > shift)
+			{
+				suffixTable[ind] = shift;
+			}
+			// cout << Index[i] << " ";
+			// cout << Shift[i] << endl;
+		}
+		// for (int i = 0; i < m - 1; ++i)
+		// {
+			
+		// }
+		// for (int i = 0;  i < m + 1 ; ++i)
+		// {
+		// 	// suffixTable[i] = i - pi_reverse[i] + 1;
+		// 	cout << suffixTable[i];
+		// }
 		return suffixTable;
 	}
 
-	vector<size_t>& Boyer_Moore()
+	vector<int>& Boyer_Moore()
 	{
-		static vector<size_t> result;
-
+		static vector<int> result;
+		vector<int> suff = getSuffixTable();
+		vector<int> stop = getStopTable();
+		// int delta_stop = 0;
+		int j = 0;
+		for (int i = 0; i < _text.length() - _substr.length() + 1; )
+		{
+			// cout << _text[i] << endl;
+			j = _substr.length() - 1;
+			// cout << j << (_substr[j] == _text[i+j]) << endl;
+			while (j >= 0 and _substr[j] == _text[i + j]){ --j; /*cout << "";*/}
+			int delta_stop;
+			if (j == -1)
+			{
+				// cout << "j == -1" << endl;
+				result.push_back(i);
+				delta_stop = 1;
+			}
+			else
+			{
+				// cout << "I + J : " << stop[_text[i + j]] << endl;
+				delta_stop = j - stop[_text[i + j]];
+				// cout << "Delta stop: " << delta_stop << endl;
+				// cout << "J: " << j << " " << stop[_text[i + j]];
+			}
+			int delta_suff = suff[j + 1];
+			// cout << "delta_suff: " << delta_suff << endl;
+			i += max (delta_stop, delta_suff);
+			// cout << max(delta_stop, delta_suff) << endl;
+			// cout << i << endl;
+		}
 		return result;
 
 	}
@@ -97,7 +176,7 @@ public:
 	vector<size_t>& Knuth_Morris_Pratt()
 	{
 		static vector<size_t> result;
-		auto pi = prefixFunc();
+		auto pi = prefixFunc(_substr);
 		size_t k = 0;
 		for (size_t i = 0; i < _text.length(); ++i)
 		{
@@ -105,7 +184,7 @@ public:
 			{
 				k = pi[k - 1];
 			}
-			if (_substr[k] = _text[i]) { k++; }
+			if (_substr[k] == _text[i]) { k++; }
 			if ( k == _substr.length() )
 			{
 				result.push_back(i - _substr.length() + 1);
@@ -115,4 +194,12 @@ public:
 
 		return result;
 	}
+
+	// int _max(int a, int b){
+	// 	cout << "_MAX" ;
+	// 	if (a>b) return a;
+	// 	else return b;
+		// return a < b ? b : a;
+
+	// }
 };
